@@ -41,19 +41,6 @@ def caesar_decrypt(ct: str, k: int) -> str:
         result += I2A[new_idx]
     return result
 
-def caesar_encrypt_preserve_case(text: str, k: int) -> str:
-    out = []
-    for ch in text:
-        if ch.isalpha():
-            base = ord('A') if ch.isupper() else ord('a')
-            new_idx = (ord(ch) - base + k) % 26
-            out.append(chr(base + new_idx))
-        else:
-            out.append(ch)
-    return "".join(out)
-
-def caesar_decrypt_preserve_case(text: str, k: int) -> str:
-    return caesar_encrypt_preserve_case(text, (-k) % 26)
 
 
 # ----- Affine -----
@@ -336,15 +323,13 @@ if mode == "Caesar (Encrypt/Decrypt)":
         text = st.text_area("Input text", "We will meet at the park at eleven am", height=120)
         k = st.number_input("Key (0–25)", min_value=0, max_value=25, value=6, step=1)
         action = st.radio("Action", ["Encrypt", "Decrypt"], horizontal=True)
-        preserve = st.checkbox("Preserve case & punctuation", value=True)
         go = st.button("Run Caesar")
     with col2:
         if go:
-            if preserve:
-                out = caesar_encrypt_preserve_case(text, k) if action == "Encrypt" else caesar_decrypt_preserve_case(
-                    text, k)
+            if action == "Encrypt":
+                out = caesar_encrypt(text, k)
             else:
-                out = caesar_encrypt(text, k) if action == "Encrypt" else caesar_decrypt(text, k)
+                out = caesar_decrypt(text, k)
             st.code(out, language="text")
             if show_metrics:
                 st.write(f"Chi-square: `{chi_square_score(out):.2f}`")
@@ -392,15 +377,12 @@ elif mode == "Vigenère (Encrypt/Decrypt)":
 elif mode == "Break Caesar (chi-square)":
     st.subheader("Break Caesar (Frequency Analysis)")
     ct = st.text_area("Ciphertext", "Ck crru skkz gz znk vgxq gz krobkx gs", height=160)
-    preserve = st.checkbox("Show result with case & punctuation preserved", value=True)
     if st.button("Break"):
-        best_k, best_pt_norm, best_score = break_caesar(ct)
-        # best_pt_norm is the normalized variant (A–Z only). For display, optionally show preserved.
-        best_pt_display = caesar_decrypt_preserve_case(ct, best_k) if preserve else best_pt_norm
+        best_k, best_pt, best_score = break_caesar(ct)
         st.success(f"Recovered key: {best_k}")
-        st.code(best_pt_display, language="text")
+        st.code(best_pt, language="text")
         if show_metrics:
-            st.write(f"Chi-square (normalized text): `{best_score:.2f}`")
+            st.write(f"Chi-square: `{best_score:.2f}`")
 
 elif mode == "Vigenère Dictionary Attack (ranked)":
     st.subheader("Vigenère Dictionary Attack (Ranked)")
